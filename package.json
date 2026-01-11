@@ -1,0 +1,27 @@
+{
+  "name": "adb-hass-androidtv",
+  "version": "1.0.0",
+  "description": "A Dockerized solution for managing ADB connections to Android devices for Home Assistant integration.",
+  "main": "androidtv-connect.sh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BLBurgess/adb-hass-androidtv.git"
+  },
+  "keywords": [
+    "adb",
+    "androidtv",
+    "firetv",
+    "googletv",
+    "home-assistant",
+    "docker"
+  ],
+  "author": "Barny Burgess",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BLBurgess/adb-hass-androidtv/issues"
+  },
+  "homepage": "https://github.com/BLBurgess/adb-hass-androidtv#readme",
+  "devDependencies": {
+    "conventional-changelog-cli": "^2.2.2"
+  }
+}

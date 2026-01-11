@@ -1,0 +1,8 @@
+# - temp files
+tmp
+
+# - do not include in repository
+files/*
+
+# - however, we do want to include this specific script
+!files/androidtv-connect.sh
