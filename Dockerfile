@@ -13,6 +13,12 @@ ENV CONFIG_DIR=/opt/androidtv-connect
 WORKDIR $ANDROID_HOME
 
 # -----------------------------
+# Declare Build arguments
+# -----------------------------
+ARG INSECURE_SHARED_ADB_KEY
+ARG INSECURE_SHARED_ADB_KEY_PUB
+
+# -----------------------------
 # Install required packages
 # -----------------------------
 RUN apk add --no-cache \
