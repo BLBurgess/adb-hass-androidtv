@@ -124,25 +124,26 @@ devicelist:
 ```
 
 ### Home Assistant
-Configure your Home Assistant instance in the `configuration.yaml` file with:
 
-```yml
-media_player:
-  - platform: androidtv
-    name: Living Room TV
-    device_class: firetv
-    host: 192.168.1.100
-    port: 5555
-    adb_server_ip: [ip of the barnybbb/adb-hass-androidtv container]
-    adb_server_port: 5037
-  - platform: androidtv
-    name: Bedroom TV
-    device_class: firetv
-    host: 192.168.1.101
-    port: 5555
-    adb_server_ip: [ip of the barnybbb/adb-hass-androidtv container]
-    adb_server_port: 5037
-```
+- Install the `Android Debug Bridge` integration
+  - Settings
+  - Add integration
+  - Search for `Android Debug Bridge`
+
+![Add Integration](doc_img/hass-adb-add-integration.png)
+
+- Add each Android device (as you have configured in the container settings)
+  - Settings
+  - Android Debug Bridge
+  - Add device
+  - Complete the device configuration
+    - `Host`: the hostname/IP of your Android device (as configured in the devicelist)
+    - `Port`: the port your Android device is listening on (as configured in the devicelist)
+    - `IP address of the ADB server`: the hostname/IP address of the barnybbb/adb-hass-androidtv docker container
+    - `Port of the ADB server`: port that the barnybbb/adb-hass-androidtv docker container is listening on (default 5037)
+  - Submit
+
+![Add Android device](doc_img/hass-adb-integration-add-device.png)
 
 ## License
 
