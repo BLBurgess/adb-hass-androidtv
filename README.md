@@ -67,7 +67,7 @@ Configuration is managed via a YAML file (`config.yml`) located in `/opt/android
 
 ### Configuration Options
 
-These can be specified as environment variables or included in the `config.yaml` file.
+These can be specified as environment variables or included in the `config.yml` file.
 Options provided in the `config.yml` will override any provided as environment variables.
 
 | config option | default | required | description |
@@ -79,18 +79,19 @@ Options provided in the `config.yml` will override any provided as environment v
 
 For the environment variable `devicelist` must be a comma separated list of devices specified in the following format:
 
-`<host>:[<port>]:[<auth_code>]:[<auth_port>]`
+`<host>[:<port>][:<auth_code>:<auth_port>]`
 
-- `<port>` is optional and if not specified will default to `5555`
-- `<auth_code>` is optional and only required if using ADB wireless pairing
-- `<auth_port>` is optional and only required if using ADB wireless pairing
+- `<host>` - required, IP address or hostname of the Android device
+- `<port>` - optional, defaults to `5555` if not specified
+- `<auth_code>` - optional, pairing code for ADB wireless pairing
+- `<auth_port>` - optional, pairing port for ADB wireless pairing (must be specified with `<auth_code>`)
 
 Examples:
 
-- `192.168.1.100` - specify a single device, will default to connect to ADB port 5555
-- `192.168.1.100:5555,192.168.101:5555` - specify two devices, both connecting to ADB port 5555
-- `192.168.1.101:5555:739264:44556` - specify a single device, with auth_code and auth_port specified
-- `192.168.1.100,192.168.1.101::739264:44556` - specify two devices, with the second device using the default port of 5555 and with auth_code and auth_port specified
+- `192.168.1.100` - specify a single device, will default to connect to ADB port `5555`
+- `192.168.1.100:5555,192.168.101:5555` - specify two devices, both connecting to ADB port `5555`
+- `192.168.1.101:5555:739264:44556` - specify a single device, with **auth_code** and **auth_port** specified
+- `192.168.1.100,192.168.1.101::739264:44556` - specify two devices, with the second device using the default port of `5555` and with **auth_code** and **auth_port** specified
 
 ### Typical Configuration File Example
 ```yml
