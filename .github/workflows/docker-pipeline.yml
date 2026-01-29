@@ -1,0 +1,129 @@
+name: Docker Build and Publish
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build-and-publish-develop:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          set-safe-directory: true
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build and push Docker image (develop)
+        if: github.ref == 'refs/heads/develop'
+        env:
+          DOCKER_BUILDKIT: 1
+          INSECURE_SHARED_ADB_KEY: ${{ secrets.INSECURE_SHARED_ADB_KEY }}
+          INSECURE_SHARED_ADB_KEY_PUB: ${{ secrets.INSECURE_SHARED_ADB_KEY_PUB }}
+        run: |
+          docker build \
+            --secret id=insecure_shared_adb_key,env=INSECURE_SHARED_ADB_KEY \
+            --secret id=insecure_shared_adb_key_pub,env=INSECURE_SHARED_ADB_KEY_PUB \
+            -t ${{ secrets.DOCKERHUB_REPO }}:develop .
+          docker push ${{ secrets.DOCKERHUB_REPO }}:develop
+
+  build-and-publish-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          set-safe-directory: true
+
+      - name: Configure github & dockerhub auth
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Generate Changelog and Version
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6.2.0
+        with:
+          preset: 'angular'
+          version-file: 'package.json'
+          output-file: 'CHANGELOG.md'
+          skip-git-pull: false
+          skip-commit: true
+          skip-tag: true
+          skip-on-empty: true
+          git-push: false
+          tag-prefix: 'v'
+
+      - name: Build Docker image
+        env:
+          DOCKER_BUILDKIT: 1
+          INSECURE_SHARED_ADB_KEY: ${{ secrets.INSECURE_SHARED_ADB_KEY }}
+          INSECURE_SHARED_ADB_KEY_PUB: ${{ secrets.INSECURE_SHARED_ADB_KEY_PUB }}
+        run: |
+          docker build \
+            --secret id=insecure_shared_adb_key,env=INSECURE_SHARED_ADB_KEY \
+            --secret id=insecure_shared_adb_key_pub,env=INSECURE_SHARED_ADB_KEY_PUB \
+            -t ${{ secrets.DOCKERHUB_REPO }}:latest \
+            -t ${{ secrets.DOCKERHUB_REPO }}:${{ steps.changelog.outputs.version }} .
+
+      - name: Update README
+        run: |
+          VERSION=${{ steps.changelog.outputs.version }}
+          RELEASE_DATE=$(date +%Y-%m-%d)
+          echo "RELEASE_DATE=$RELEASE_DATE"
+          ALPINE_VERSION=$(docker run --rm --entrypoint /bin/cat ${{ secrets.DOCKERHUB_REPO }}:${{ steps.changelog.outputs.version }} /etc/alpine-release)
+          echo "ALPINE_VERSION=$ALPINE_VERSION"
+          ADB_VERSION=$(docker run --rm --entrypoint /opt/platform-tools/adb ${{ secrets.DOCKERHUB_REPO }}:${{ steps.changelog.outputs.version }} version | grep 'Version' | awk '{print $2}')
+          echo "ADB_VERSION=$ADB_VERSION"
+          sed -i "/^|---|/a | $VERSION | $RELEASE_DATE | $ALPINE_VERSION | $ADB_VERSION | [See CHANGELOG](CHANGELOG.md#${VERSION//./}-$RELEASE_DATE) |" README.md
+
+      - name: Commit README, CHANGELOG & package.json changes and tag the version
+        id: tag-version
+        run: |
+          git add README.md CHANGELOG.md package.json
+          git commit -m "docs: update README & CHANGELOG for release ${{ steps.changelog.outputs.version }}"
+          git tag -a ${{ steps.changelog.outputs.tag }} -m "Release version ${{ steps.changelog.outputs.version }}"
+          git push origin main
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Apply latest main commit to develop branch
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git checkout develop
+          git cherry-pick $(git log main -1 --format="%H")
+          git push origin develop
+
+      - name: Publish Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_REPO }}:${{ steps.changelog.outputs.version }}
+          docker push ${{ secrets.DOCKERHUB_REPO }}:latest
+
+      - name: Update DockerHub description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_REPO }}
+          readme-filepath: README.md
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
