@@ -158,4 +158,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 | Image Version | Release Date | Alpine Version | ADB Version | Release Notes |
 |---|---|---|---|---|
+| 1.1.0 | 2026-01-29 | 3.23.3 | 36.0.2-14143358 | [See CHANGELOG](CHANGELOG.md#110-2026-01-29) |
 | 1.0.0 | 2020-12-22 | 3.22.0 | 29.0.6-6198805 | [See CHANGELOG](CHANGELOG.md#100-2020-12-22) |
